@@ -1,0 +1,77 @@
+!!NVvp5.0
+OPTION NV_shader_atomic_float;
+# cgc version 3.4.0001, build date Jan 29 2016
+# command line args: 
+#vendor NVIDIA Corporation
+#version 3.4.0.1
+#profile gp5vp
+#program main
+#semantic proj
+#var float4 gl_Position : $vout.POSITION : HPOS : -1 : 1
+#var float2 base_pos : $vin.ATTR0 : ATTR0 : -1 : 1
+#var float2 base_uv : $vin.ATTR1 : ATTR1 : -1 : 1
+#var float2 in_origin : $vin.ATTR2 : ATTR2 : -1 : 1
+#var float2 in_scale : $vin.ATTR3 : ATTR3 : -1 : 1
+#var float2 in_position : $vin.ATTR4 : ATTR4 : -1 : 1
+#var float in_rotation : $vin.ATTR5 : ATTR5 : -1 : 1
+#var float2 in_u : $vin.ATTR6 : ATTR6 : -1 : 1
+#var float2 in_v : $vin.ATTR7 : ATTR7 : -1 : 1
+#var float in_layer : $vin.ATTR8 : ATTR8 : -1 : 1
+#var float4 in_color : $vin.ATTR9 : ATTR9 : -1 : 1
+#var float in_additive : $vin.ATTR10 : ATTR10 : -1 : 1
+#var float in_msdf : $vin.ATTR11 : ATTR11 : -1 : 1
+#var float4x4 proj :  : c[0], 4 : -1 : 1
+#var float4 col_tint : $vout.ATTR0 : ATTR0 : -1 : 1
+#var float3 tex_coord : $vout.ATTR1.xyz : ATTR1 : -1 : 1
+#var float additive : $vout.ATTR2.x : ATTR2 : -1 : 1
+#var float msdf : $vout.ATTR3.x : ATTR3 : -1 : 1
+PARAM c[4] = { program.local[0..3] };
+ATTRIB vertex_attrib[] = { vertex.attrib[0..11] };
+OUTPUT result_attrib[] = { result.attrib[0..3] };
+TEMP R0, R1;
+TEMP RC, HC;
+MAD.F R0.xy, -vertex.attrib[2], {2, 0, 0, 0}.x, vertex.attrib[0];
+MAD.F R0.xy, R0, vertex.attrib[3], vertex.attrib[3];
+SIN.F R0.w, vertex.attrib[5].x;
+COS.F R0.z, vertex.attrib[5].x;
+MUL.F R1.y, R0.z, R0;
+MUL.F R1.x, R0.y, R0.w;
+MAD.F R0.y, R0.x, R0.w, R1;
+MAD.F R0.x, R0.z, R0, -R1;
+ADD.F R1.xy, R0, vertex.attrib[4];
+MUL.F R0, R1.y, c[1];
+MAD.F R0, R1.x, c[0], R0;
+ADD.F R0, R0, c[3];
+ADD.F result.position, R0, {0, 0, 0, 0}.x;
+TRUNC.S R1.x, vertex.attrib[1];
+SNE.S R0.y, R1.x, {0, 0, 0, 0}.x;
+MOV.U.CC RC.x, -R0.y;
+MOV.U R0.x, {1, 0, 0, 0};
+IF    NE.x;
+MOV.F R1.z, vertex.attrib[6].y;
+MOV.U R0.x, {0, 0, 0, 0};
+ENDIF;
+MOV.U.CC RC.x, R0;
+IF    NE.x;
+MOV.F R1.z, vertex.attrib[6].x;
+ENDIF;
+TRUNC.S R0.x, vertex.attrib[1].y;
+SNE.S R0.y, R0.x, {0, 0, 0, 0}.x;
+MOV.U.CC RC.x, -R0.y;
+MOV.U R0.x, {1, 0, 0, 0};
+IF    NE.x;
+MOV.F R1.w, vertex.attrib[7].y;
+MOV.U R0.x, {0, 0, 0, 0};
+ENDIF;
+MOV.U.CC RC.x, R0;
+IF    NE.x;
+MOV.F R1.w, vertex.attrib[7].x;
+ENDIF;
+MOV.F result.attrib[0], vertex.attrib[9];
+MOV.F result.attrib[1].x, R1.z;
+MOV.F result.attrib[2].x, vertex.attrib[10];
+MOV.F result.attrib[1].y, R1.w;
+MOV.F result.attrib[1].z, vertex.attrib[8].x;
+MOV.F result.attrib[3].x, vertex.attrib[11];
+END
+# 43 instructions, 2 R-regs
